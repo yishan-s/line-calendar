@@ -201,7 +201,6 @@ def check_and_send_reminders():
                 }
                 
                 # 4. 在背景發送 HTTP 請求給 LINE 伺服器
-                # 注意：因為排程器是在背景獨立執行，這裡我們用一般的 httpx.post (同步) 比較穩定
                 with httpx.Client() as client:
                     res = client.post(LINE_API_URL, headers=headers, json=data)
                     
