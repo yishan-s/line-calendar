@@ -1,26 +1,45 @@
+from sqlalchemy.orm import Session
+import models
 import os
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import models
-from database import engine
+from database import engine, SessionLocal
 from dotenv import load_dotenv
+from datetime import datetime
+from typing import Optional
 
 load_dotenv()
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = SessionLocal() # 1. 申請一把臨時鑰匙打開連線
+    try:
+        yield db        # 2. 把鑰匙交給需要的路由去辦事 (yield 是一個 Python 特性，代表「暫停在這裡，等別人用完」)
+    finally:
+        db.close()      # 3. 辦完事，不管成功或失敗，都把連線關閉
 
 CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 
 LINE_LOGIN_CHANNEL_ID = os.getenv("LINE_LOGIN_CHANNEL_ID")
 LINE_LOGIN_CHANNEL_SECRET = os.getenv("LINE_LOGIN_CHANNEL_SECRET")
-CALLBACK_URL = "https://127.0.0.1:8000/callback/line"
+CALLBACK_URL = "http://127.0.0.1:8000/callback/line"
 
 class TestMessage(BaseModel):
     user_id: str
     text: str
+
+class EventCreate(BaseModel):
+    user_id: int         
+    title: str          
+    description: Optional[str] = None  
+    start_time: datetime 
+    end_time: datetime   
+    remind_time: datetime
 
 @app.get("/")
 def read_root():
@@ -39,7 +58,7 @@ def line_login():
     return RedirectResponse(url=auth_url)
 
 @app.get("/callback/line")
-async def line_callback(code: str, state: str):
+async def line_callback(code: str, state: str, db: Session = Depends(get_db)):
     # 用 code 換取 Access Token
     token_url = "https://api.line.me/oauth2/v2.1/token"
     token_data = {
@@ -69,7 +88,18 @@ async def line_callback(code: str, state: str):
             return {"error": "NOT RECEIVED Profile", "detail": profile_res.text}
             
         profile_json = profile_res.json()
-        
+        # print(profile_json)
+
+        db_user = db.query(models.User).filter(models.User.line_user_id == profile_json.get("userId")).first()
+        if not db_user:
+            # create a new User 
+            new_user = models.User(
+                line_user_id=profile_json.get("userId"),
+                display_name=profile_json.get("displayName"),
+                picture_url=profile_json.get("pictureUrl")
+            )
+            db.add(new_user)
+            db.commit()
     # received data, then print it out
     return {
         "message": "Login Success!",
@@ -109,3 +139,32 @@ async def send_test_message(payload: TestMessage):
             "error_code": response.status_code, 
             "detail": response.text
         }
+    
+# get all USERs
+@app.get("/users")
+def get_all_users(db: Session = Depends(get_db)):
+    all_users = db.query(models.User).all()
+    return all_users
+
+# create an event
+@app.post("/events")
+def create_event(event: EventCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.id == event.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User Not Found")
+    
+    new_event = models.Event(
+        user_id=event.user_id,
+        title=event.title,
+        description=event.description,
+        start_time=event.start_time,
+        end_time=event.end_time,
+        remind_time=event.remind_time
+    )
+    
+    db.add(new_event)
+    db.commit()
+    
+    db.refresh(new_event)
+    
+    return {"message": "Event Created", "event": new_event}
