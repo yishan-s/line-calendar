@@ -2,13 +2,14 @@ from sqlalchemy.orm import Session
 import models
 import os
 import httpx
+from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import models
 from database import engine, SessionLocal
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 load_dotenv()
@@ -168,3 +169,55 @@ def create_event(event: EventCreate, db: Session = Depends(get_db)):
     db.refresh(new_event)
     
     return {"message": "Event Created", "event": new_event}
+
+def check_and_send_reminders():
+    # 1. 因為這不是 API 路由，我們必須自己手動開資料庫大門
+    db = SessionLocal()
+    try:
+        # 建立台灣時區
+        tw_tz = timezone(timedelta(hours=8))
+        now = datetime.now(tw_tz).replace(tzinfo=None)
+        upcoming_events = db.query(models.Event).filter(
+            models.Event.remind_time <= now,
+            models.Event.is_reminded == False
+        ).all()
+        
+        # 3. 如果有找到行程，就用迴圈一筆一筆處理
+        for event in upcoming_events:
+            # 透過 ORM 關係，直接拿到這個行程擁有者的 LINE ID
+            line_id = event.owner.line_user_id
+            
+            if line_id and CHANNEL_ACCESS_TOKEN:
+                # 組裝要傳給 LINE 的內文
+                reminder_text = f"【{event.title}】\n即將在 {event.start_time.strftime('%Y-%m-%d %H:%M')} 開始ㄌ！"
+                
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {CHANNEL_ACCESS_TOKEN}"
+                }
+                data = {
+                    "to": line_id,
+                    "messages": [{"type": "text", "text": reminder_text}]
+                }
+                
+                # 4. 在背景發送 HTTP 請求給 LINE 伺服器
+                # 注意：因為排程器是在背景獨立執行，這裡我們用一般的 httpx.post (同步) 比較穩定
+                with httpx.Client() as client:
+                    res = client.post(LINE_API_URL, headers=headers, json=data)
+                    
+                    # 如果 LINE 成功接收，我們就改寫資料庫狀態
+                    if res.status_code == 200:
+                        event.is_reminded = True
+                        db.commit() # 5. 確認改寫，鎖上金庫
+                        print(f"成功發送提醒給 {event.owner.display_name}：{event.title}")
+                    else:
+                        print(f"發送失敗，LINE 回傳：{res.text}")
+                        
+    except Exception as e:
+        print(f"排程檢查發生錯誤: {e}")
+    finally:
+        db.close() # 6. 無論如何，最後一定要把資料庫連線關掉！
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(check_and_send_reminders, 'interval', minutes=0.5)
+scheduler.start()
