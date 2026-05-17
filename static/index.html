@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <nav class="bg-emerald-600 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold font-mono">Calendar</h1>
+        <div id="user-info" class="flex items-center space-x-3">
+            <span class="text-sm bg-emerald-700 px-3 py-1 rounded-full">Login</span>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto my-6 p-4 bg-white rounded-xl shadow-lg">
+        <div id="calendar"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            
+            // 初始化 FullCalendar 實例
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth', // 預設顯示月分視圖
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                }
+            });
+            
+            // 渲染畫布！
+            calendar.render();
+        });
+    </script>
+</body>
+</html>

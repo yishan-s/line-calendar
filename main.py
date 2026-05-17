@@ -1,3 +1,4 @@
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 import models
 import os
@@ -14,6 +15,7 @@ from typing import Optional
 
 load_dotenv()
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 models.Base.metadata.create_all(bind=engine)
 
 def get_db():
@@ -45,7 +47,7 @@ class EventCreate(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"message": "Hello World! backend is working!"}
+    return RedirectResponse(url="/static/index.html")
 
 @app.get("/login/line")
 def line_login():
