@@ -35,12 +35,13 @@ class TestMessage(BaseModel):
     text: str
 
 class EventCreate(BaseModel):
-    user_id: int         
-    title: str          
-    description: Optional[str] = None  
-    start_time: datetime 
-    end_time: datetime   
-    remind_time: datetime
+    user_id: int
+    title: str
+    description: Optional[str] = None
+    start_time: datetime
+    end_time: Optional[datetime] = None    
+    is_all_day: Optional[bool] = False     
+    remind_time: Optional[datetime] = None
 
 @app.get("/")
 def read_root():
@@ -147,6 +148,10 @@ def get_all_users(db: Session = Depends(get_db)):
     all_users = db.query(models.User).all()
     return all_users
 
+@app.get("/test-events")
+def get_all_events(db: Session = Depends(get_db)):
+    return db.query(models.Event).all()
+
 # create an event
 @app.post("/events")
 def create_event(event: EventCreate, db: Session = Depends(get_db)):
@@ -160,7 +165,9 @@ def create_event(event: EventCreate, db: Session = Depends(get_db)):
         description=event.description,
         start_time=event.start_time,
         end_time=event.end_time,
-        remind_time=event.remind_time
+        is_all_day=event.is_all_day,     
+        remind_time=event.remind_time,
+        is_completed=False               
     )
     
     db.add(new_event)
@@ -178,6 +185,7 @@ def check_and_send_reminders():
         tw_tz = timezone(timedelta(hours=8))
         now = datetime.now(tw_tz).replace(tzinfo=None)
         upcoming_events = db.query(models.Event).filter(
+            models.Event.remind_time != None,
             models.Event.remind_time <= now,
             models.Event.is_reminded == False
         ).all()

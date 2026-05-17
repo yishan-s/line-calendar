@@ -19,13 +19,18 @@ class Event(Base):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id")) # 對應到 users 表的 id
+    user_id = Column(Integer, ForeignKey("users.id"))
     title = Column(String)
     description = Column(String, nullable=True)
+    
     start_time = Column(DateTime)
-    end_time = Column(DateTime)
-    remind_time = Column(DateTime)
+    end_time = Column(DateTime, nullable=True)
+    
+    is_all_day = Column(Boolean, default=False)
+    
+    is_completed = Column(Boolean, default=False)   
+    
+    remind_time = Column(DateTime, nullable=True)
     is_reminded = Column(Boolean, default=False)
 
-    # 建立與 User 的反向關聯
     owner = relationship("User", back_populates="events")
