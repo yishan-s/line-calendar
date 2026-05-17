@@ -3,10 +3,13 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
+import models
+from database import engine
 from dotenv import load_dotenv
 
 load_dotenv()
 app = FastAPI()
+models.Base.metadata.create_all(bind=engine)
 
 CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_API_URL = "https://api.line.me/v2/bot/message/push"
