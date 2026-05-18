@@ -9,7 +9,6 @@ from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-
 import models
 from database import SessionLocal, engine
 
