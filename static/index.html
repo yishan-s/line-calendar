@@ -1,73 +1,267 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendar</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.11/index.global.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            color: #37352f;
+        }
+
+        .fc {
+            --fc-border-color: #e9e9e6 !important;
+            --fc-page-bg-color: #ffffff !important;
+        }
+
+        .fc .fc-button-primary {
+            background-color: transparent !important;
+            border: 1px solid #e9e9e6 !important;
+            color: #37352f !important;
+            font-size: 0.875rem !important;
+            padding: 4px 8px !important;
+            text-transform: capitalize !important;
+            transition: background-color 0.2s;
+        }
+
+        .fc .fc-button-primary:hover {
+            background-color: #efefe0 !important;
+        }
+
+        .fc .fc-button-active {
+            background-color: #f1f1ef !important;
+            border-color: #e9e9e6 !important;
+        }
+
+        .fc .fc-toolbar-title {
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
+            letter-spacing: -0.02em;
+        }
+
+        .fc .fc-col-header-cell-cushion {
+            color: #787774 !important;
+            font-size: 0.8rem !important;
+            font-weight: 500 !important;
+        }
+
+        .fc-event {
+            padding: 2px 4px !important;
+            font-size: 0.75rem !important;
+            font-weight: 500 !important;
+            border-radius: 3px !important;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
 
-    <nav class="bg-emerald-600 text-white p-4 shadow-md flex justify-between items-center">
-        <h1 class="text-xl font-bold font-mono">Calendar</h1>
-        <div id="user-info" class="flex items-center space-x-3">
-            <span class="text-sm bg-emerald-700 px-3 py-1 rounded-full">Login</span>
+<body class="bg-[#fbfbfa] min-h-screen pb-12">
+
+    <header class="max-w-4xl mx-auto pt-16 px-6 mb-4">
+        <div class="flex items-center space-x-3 text-4xl mb-2">
+            <h1 class="text-3xl font-bold tracking-tight text-[#37352f]">Calendar</h1>
         </div>
-    </nav>
+        <hr class="mt-6 border-[#e9e9e6]">
+    </header>
 
-    <div class="max-w-6xl mx-auto my-6 p-4 bg-white rounded-xl shadow-lg">
-        <div id="calendar"></div>
+    <main class="max-w-4xl mx-auto px-6">
+        <div class="bg-white rounded-lg border border-[#e9e9e6] p-6 shadow-[0_1px_3px_rgba(15,15,15,0.05)]">
+            <div id="calendar"></div>
+        </div>
+    </main>
+    <div id="event-modal"
+        class="fixed inset-0 bg-black/20 hidden flex items-center justify-center z-50 transition-opacity">
+        <div
+            class="bg-white p-6 rounded-lg border border-[#e9e9e6] shadow-[0_15px_30px_rgba(15,15,15,0.1)] max-w-md w-full mx-4">
+            <div class="flex items-center space-x-2 text-xl mb-4">
+                <h3 class="text-base font-semibold text-[#37352f]">Add New Event</h3>
+            </div>
+
+            <form id="event-form" class="space-y-4 text-sm text-[#37352f]">
+                <input type="hidden" id="modal-user-id" value="1">
+
+                <div>
+                    <label class="block text-xs font-medium text-[#787774] mb-1">Title</label>
+                    <input type="text" id="modal-title" required placeholder="e.g., Dinner with friends"
+                        class="w-full p-2 bg-[#fbfbfa] border border-[#e9e9e6] rounded focus:outline-none focus:border-[#787774]">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#787774] mb-1">Description</label>
+                    <textarea id="modal-description" rows="2" placeholder="Add Details..."
+                        class="w-full p-2 bg-[#fbfbfa] border border-[#e9e9e6] rounded focus:outline-none focus:border-[#787774]"></textarea>
+                </div>
+
+                <div class="flex items-center space-x-2 py-1">
+                    <input type="checkbox" id="modal-is-all-day"
+                        class="h-4 w-4 rounded border-[#e9e9e6] text-[#37352f] focus:ring-0">
+                    <label for="modal-is-all-day" class="text-xs font-medium text-[#787774] cursor-pointer">All-day event / Special day</label>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-[#787774] mb-1">Start Time</label>
+                        <input type="datetime-local" id="modal-start-time" required
+                            class="w-full p-2 bg-[#fbfbfa] border border-[#e9e9e6] rounded focus:outline-none">
+                    </div>
+                    <div id="end-time-group">
+                        <label class="block text-xs font-medium text-[#787774] mb-1">End Time (Optional)</label>
+                        <input type="datetime-local" id="modal-end-time"
+                            class="w-full p-2 bg-[#fbfbfa] border border-[#e9e9e6] rounded focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-[#787774] mb-1">LINE Reminder (Optional)</label>
+                    <input type="datetime-local" id="modal-remind-time"
+                        class="w-full p-2 bg-[#fbfbfa] border border-[#e9e9e6] rounded focus:outline-none">
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2 text-xs">
+                    <button type="button" id="close-modal"
+                        class="px-3 py-1.5 rounded border border-[#e9e9e6] text-[#787774] hover:bg-[#efefe0] transition">Cancel</button>
+                    <button type="submit"
+                        class="px-3 py-1.5 rounded bg-[#37352f] text-white hover:bg-[#504e4a] transition font-medium">Save to Calendar</button>
+                </div>
+            </form>
+        </div>
     </div>
-
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             var calendarEl = document.getElementById('calendar');
-            
-            // 初始化 FullCalendar 實例
+            var modal = document.getElementById('event-modal');
+            var form = document.getElementById('event-form');
+
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
-                locale: 'zh-tw',
+                height: 'auto',
+                selectable: true, 
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    right: 'dayGridMonth,timeGridWeek'
                 },
-                    events: function(fetchInfo, successCallback, failureCallback) {
-                    // 用前端的 fetch 發出 GET 請求給我們剛寫好的 API (先寫死 user 1)
+
+                views: {
+                    dayGridMonth: { 
+                        displayEventTime: false 
+                    },
+                    timeGridWeek: {
+                        displayEventTime: true 
+                    }
+                },
+
+                // 當滑鼠點擊日曆任何一格
+                dateClick: function (info) {
+                    document.getElementById('modal-start-time').value = info.dateStr + "T09:00";
+                    document.getElementById('modal-end-time').value = info.dateStr + "T10:00";
+                    document.getElementById('modal-remind-time').value = "";
+                    form.reset();
+                    document.getElementById('modal-user-id').value = "1";
+                    document.getElementById('modal-start-time').value = info.dateStr + "T09:00";
+                    modal.classList.remove('hidden');
+                },
+
+                events: function (fetchInfo, successCallback, failureCallback) {
                     fetch('/users/1/events')
                         .then(response => response.json())
                         .then(data => {
-                            // 把後端的欄位名稱，翻譯成 FullCalendar 看得懂的格式
-                            var formattedEvents = data.map(function(item) {
+                            var formattedEvents = data.map(function (item) {
+                                var bgColor = '#f1f1ef';
+                                var textColor = '#37352f';
+
+                                if (item.is_all_day) {
+                                    bgColor = '#fde8e8';
+                                    textColor = '#9b1c1c';
+                                } else if (item.end_time == null) {
+                                    bgColor = '#e1effe';
+                                    textColor = '#1e429f';
+                                } else {
+                                    bgColor = '#def7ec';
+                                    textColor = '#03543f';
+                                }
+
                                 return {
                                     id: item.id,
                                     title: item.title,
-                                    start: item.start_time, 
-                                    end: item.end_time, 
-                                    allDay: item.is_all_day, 
-                                    extendedProps: {
-                                        description: item.description,
-                                        is_completed: item.is_completed
-                                    },
-                                    backgroundColor: item.is_all_day ? '#db2777' : '#059669', // 整日粉紅，一般翠綠
+                                    start: item.start_time,
+                                    end: item.end_time,
+                                    allDay: item.is_all_day,
+                                    backgroundColor: bgColor,
+                                    textColor: textColor,
                                     borderColor: 'transparent'
                                 };
                             });
-                            
-                            // 成功！把翻譯好的資料餵給 FullCalendar 畫出來
                             successCallback(formattedEvents);
                         })
                         .catch(error => {
-                            console.error('撈取行程失敗:', error);
                             failureCallback(error);
                         });
                 }
             });
-            
-            // 渲染畫布！
+
             calendar.render();
+
+            // 點擊取消，關閉彈窗
+            document.getElementById('close-modal').addEventListener('click', function () {
+                modal.classList.add('hidden');
+            });
+
+            // 監聽「整日事項」打勾勾：把不需要的時間欄位鎖定，做到極簡防呆
+            document.getElementById('modal-is-all-day').addEventListener('change', function (e) {
+                var endTimeGroup = document.getElementById('end-time-group');
+                if (e.target.checked) {
+                    endTimeGroup.classList.add('opacity-40');
+                    document.getElementById('modal-end-time').disabled = true;
+                } else {
+                    endTimeGroup.classList.remove('opacity-40');
+                    document.getElementById('modal-end-time').disabled = false;
+                }
+            });
+
+            // 處理表單儲存 (POST 到後端)
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var payload = {
+                    user_id: parseInt(document.getElementById('modal-user-id').value),
+                    title: document.getElementById('modal-title').value,
+                    description: document.getElementById('modal-description').value || null,
+                    start_time: document.getElementById('modal-start-time').value,
+                    end_time: document.getElementById('modal-end-time').value || null,
+                    is_all_day: document.getElementById('modal-is-all-day').checked,
+                    remind_time: document.getElementById('modal-remind-time').value || null
+                };
+
+                if (payload.is_all_day) {
+                    payload.end_time = null;
+                    payload.remind_time = null;
+                }
+
+                fetch('/events', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                    .then(response => {
+                        if (!response.ok) throw new Error('儲存失敗');
+                        return response.json();
+                    })
+                    .then(result => {
+                        modal.classList.add('hidden');
+                        calendar.refetchEvents();
+                    })
+                    .catch(error => {
+                        alert('發生錯誤：' + error.message);
+                    });
+            });
         });
     </script>
 </body>
+
 </html>
