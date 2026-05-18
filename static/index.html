@@ -52,21 +52,37 @@
         }
 
         .fc-event {
-            padding: 2px 4px !important;
+            padding: 2px 8px !important;
             font-size: 0.75rem !important;
             font-weight: 500 !important;
-            border-radius: 3px !important;
+            border-radius: 50px !important;
+        }
+
+        .fc-daygrid-event-dot {
+            display: none !important;
+        }
+
+        .fc-daygrid-dot-event {
+            padding: 0 !important;
+            margin-bottom: 2px !important;
+        }
+
+        .fc-daygrid-dot-event:hover {
+            background-color: #f3f4f6 !important;
         }
     </style>
 </head>
 
 <body class="bg-[#fbfbfa] min-h-screen pb-12">
 
-    <header class="max-w-4xl mx-auto pt-16 px-6 mb-4">
+    <header class="max-w-4xl mx-auto pt-16 px-6 mb-4 flex justify-between items-end">
         <div class="flex items-center space-x-3 text-4xl mb-2">
             <h1 class="text-3xl font-bold tracking-tight text-[#37352f]">Calendar</h1>
         </div>
-        <hr class="mt-6 border-[#e9e9e6]">
+        <div id="user-profile" class="flex items-center space-x-2 text-sm text-[#787774] pb-2 hidden">
+            <img id="user-avatar" src="" class="w-6 h-6 rounded-full border border-[#e9e9e6]">
+            <span id="user-name" class="font-medium">Loading...</span>
+        </div>
     </header>
 
     <main class="max-w-4xl mx-auto px-6">
@@ -74,6 +90,7 @@
             <div id="calendar"></div>
         </div>
     </main>
+
     <div id="event-modal"
         class="fixed inset-0 bg-black/20 hidden flex items-center justify-center z-50 transition-opacity">
         <div
@@ -100,7 +117,8 @@
                 <div class="flex items-center space-x-2 py-1">
                     <input type="checkbox" id="modal-is-all-day"
                         class="h-4 w-4 rounded border-[#e9e9e6] text-[#37352f] focus:ring-0">
-                    <label for="modal-is-all-day" class="text-xs font-medium text-[#787774] cursor-pointer">All-day event / Special day</label>
+                    <label for="modal-is-all-day" class="text-xs font-medium text-[#787774] cursor-pointer">All-day
+                        event / Special day</label>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
@@ -126,13 +144,32 @@
                     <button type="button" id="close-modal"
                         class="px-3 py-1.5 rounded border border-[#e9e9e6] text-[#787774] hover:bg-[#efefe0] transition">Cancel</button>
                     <button type="submit"
-                        class="px-3 py-1.5 rounded bg-[#37352f] text-white hover:bg-[#504e4a] transition font-medium">Save to Calendar</button>
+                        class="px-3 py-1.5 rounded bg-[#37352f] text-white hover:bg-[#504e4a] transition font-medium">Save
+                        to Calendar</button>
                 </div>
             </form>
         </div>
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var currentUserId = 1; // 預設防呆為 1
+
+            fetch('/users/me')
+                .then(response => {
+                    if (!response.ok) throw new Error('未登入');
+                    return response.json();
+                })
+                .then(user => {
+                    currentUserId = user.id;
+                    document.getElementById('user-avatar').src = user.picture_url || 'https://www.notion.so/images/page-cover/nasa_the_blue_marble.jpg';
+                    document.getElementById('user-name').innerText = user.display_name;
+                    document.getElementById('user-profile').classList.remove('hidden');
+                    calendar.refetchEvents(); // 叫日曆重新去撈使用者的行程
+                })
+                .catch(err => {
+                    console.log('尚未登入 LINE，使用預設 ID 1 顯示');
+                });
             var calendarEl = document.getElementById('calendar');
             var modal = document.getElementById('event-modal');
             var form = document.getElementById('event-form');
@@ -140,23 +177,46 @@
             var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 height: 'auto',
-                selectable: true, 
+                selectable: true,
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek'
                 },
 
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    meridiem: 'short'
+                },
+
                 views: {
-                    dayGridMonth: { 
-                        displayEventTime: false 
+                    dayGridMonth: {
+                        displayEventTime: false // 月曆一樣只顯示標題，保持極簡
                     },
                     timeGridWeek: {
-                        displayEventTime: true 
+                        displayEventTime: true  // 週曆會顯示時間
                     }
                 },
 
-                // 當滑鼠點擊日曆任何一格
+                eventContent: function (arg) {
+                    // 如果是全日活動，回傳 true 讓它用預設的粉色背景鋪滿渲染
+                    if (arg.event.allDay) {
+                        return true;
+                    }
+
+                    // 如果是非全日活動：注入自訂的 HTML（精準還原你的截圖）
+                    var borderColor = arg.event.extendedProps.leftBorderColor || '#4f46e5';
+
+                    var html = `
+                        <div class="flex flex-col pl-2 border-l-[3px] ml-1 py-[1px]" style="border-color: ${borderColor};">
+                            <div class="text-[0.85rem] font-bold text-[#4b5563] leading-tight truncate">${arg.event.title}</div>
+                            ${arg.timeText ? `<div class="text-[0.75rem] text-[#9ca3af] font-medium leading-none mt-1">${arg.timeText}</div>` : ''}
+                        </div>
+                    `;
+                    return { html: html };
+                },
+
                 dateClick: function (info) {
                     document.getElementById('modal-start-time').value = info.dateStr + "T09:00";
                     document.getElementById('modal-end-time').value = info.dateStr + "T10:00";
@@ -174,16 +234,17 @@
                             var formattedEvents = data.map(function (item) {
                                 var bgColor = '#f1f1ef';
                                 var textColor = '#37352f';
+                                var leftBorderColor = 'transparent'; // 用來存左側線條的顏色
 
                                 if (item.is_all_day) {
                                     bgColor = '#fde8e8';
                                     textColor = '#9b1c1c';
                                 } else if (item.end_time == null) {
-                                    bgColor = '#e1effe';
-                                    textColor = '#1e429f';
+                                    bgColor = 'transparent';
+                                    leftBorderColor = '#37352f';
                                 } else {
-                                    bgColor = '#def7ec';
-                                    textColor = '#03543f';
+                                    bgColor = 'transparent';
+                                    leftBorderColor = '#37352f';
                                 }
 
                                 return {
@@ -194,7 +255,10 @@
                                     allDay: item.is_all_day,
                                     backgroundColor: bgColor,
                                     textColor: textColor,
-                                    borderColor: 'transparent'
+                                    borderColor: 'transparent',
+                                    extendedProps: { // 把左側線條顏色偷塞在這裡，給上面的 eventContent 用
+                                        leftBorderColor: leftBorderColor
+                                    }
                                 };
                             });
                             successCallback(formattedEvents);
@@ -207,12 +271,10 @@
 
             calendar.render();
 
-            // 點擊取消，關閉彈窗
             document.getElementById('close-modal').addEventListener('click', function () {
                 modal.classList.add('hidden');
             });
 
-            // 監聽「整日事項」打勾勾：把不需要的時間欄位鎖定，做到極簡防呆
             document.getElementById('modal-is-all-day').addEventListener('change', function (e) {
                 var endTimeGroup = document.getElementById('end-time-group');
                 if (e.target.checked) {
@@ -224,7 +286,6 @@
                 }
             });
 
-            // 處理表單儲存 (POST 到後端)
             form.addEventListener('submit', function (e) {
                 e.preventDefault();
 
@@ -257,7 +318,7 @@
                         calendar.refetchEvents();
                     })
                     .catch(error => {
-                        alert('發生錯誤：' + error.message);
+                        alert('Something Wrong :((' + error.message);
                     });
             });
         });
