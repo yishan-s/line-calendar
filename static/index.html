@@ -26,11 +26,42 @@
             
             // 初始化 FullCalendar 實例
             var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth', // 預設顯示月分視圖
+                initialView: 'dayGridMonth',
+                locale: 'zh-tw',
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                    events: function(fetchInfo, successCallback, failureCallback) {
+                    // 用前端的 fetch 發出 GET 請求給我們剛寫好的 API (先寫死 user 1)
+                    fetch('/users/1/events')
+                        .then(response => response.json())
+                        .then(data => {
+                            // 把後端的欄位名稱，翻譯成 FullCalendar 看得懂的格式
+                            var formattedEvents = data.map(function(item) {
+                                return {
+                                    id: item.id,
+                                    title: item.title,
+                                    start: item.start_time, 
+                                    end: item.end_time, 
+                                    allDay: item.is_all_day, 
+                                    extendedProps: {
+                                        description: item.description,
+                                        is_completed: item.is_completed
+                                    },
+                                    backgroundColor: item.is_all_day ? '#db2777' : '#059669', // 整日粉紅，一般翠綠
+                                    borderColor: 'transparent'
+                                };
+                            });
+                            
+                            // 成功！把翻譯好的資料餵給 FullCalendar 畫出來
+                            successCallback(formattedEvents);
+                        })
+                        .catch(error => {
+                            console.error('撈取行程失敗:', error);
+                            failureCallback(error);
+                        });
                 }
             });
             
