@@ -4,7 +4,7 @@ from typing import Optional
 import httpx
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Cookie
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -111,20 +111,18 @@ async def line_callback(code: str, state: str, db: Session = Depends(get_db)):
             .first()
         )
         if not db_user:
-            new_user = models.User(
+            db_user = models.User(
                 line_user_id=line_user_id,
                 display_name=profile_json.get("displayName"),
                 picture_url=profile_json.get("pictureUrl"),
             )
-            db.add(new_user)
+            db.add(db_user)
             db.commit()
+            db.refresh(db_user)
+    response = RedirectResponse(url="/")
+    response.set_cookie(key="current_user_id", value=str(db_user.id), max_age=2592000, path="/")
 
-    return {
-        "message": "Login Success!",
-        "user_name": profile_json.get("displayName"),
-        "user_id": line_user_id,
-        "picture_url": profile_json.get("pictureUrl"),
-    }
+    return response
 
 # 新增行程
 @app.post("/events")
@@ -160,6 +158,18 @@ def get_user_events(user_id: int, db: Session = Depends(get_db)):
         db.query(models.Event).filter(models.Event.user_id == user_id).all()
     )
     return user_events
+
+# Get current user
+@app.get("/users/me")
+def get_current_user(current_user_id: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
+    if not current_user_id:
+        raise HTTPException(status_code=401, detail="尚未登入")
+    
+    user = db.query(models.User).filter(models.User.id == int(current_user_id)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="找不到使用者")
+        
+    return user
 
 
 # [debugging] get_all_users
