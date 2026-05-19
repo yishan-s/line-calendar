@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { format } from 'date-fns';
+import { format, subMinutes } from 'date-fns';
 import { X, Star, Clock, HelpCircle } from 'lucide-react';
 import './EventModal.css';
 
@@ -9,12 +9,23 @@ const EVENT_TYPES = [
   { id: 'open', label: 'Start Only (TBD end)', icon: <HelpCircle size={16} />, color: 'var(--color-event-open)' },
 ];
 
+const REMINDER_OPTIONS = [
+  { value: 0, label: 'At start of event' },
+  { value: 5, label: '5 minutes before' },
+  { value: 10, label: '10 minutes before' },
+  { value: 15, label: '15 minutes before' },
+  { value: 30, label: '30 minutes before' },
+  { value: 60, label: '1 hour before' },
+  { value: 1440, label: '1 day before' },
+];
+
 export default function EventModal({ isOpen, onClose, onSave, selectedDate }) {
   const [eventType, setEventType] = useState('timed');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
+  const [reminderMinutes, setReminderMinutes] = useState(15);
 
   useEffect(() => {
     if (isOpen) {
@@ -23,6 +34,7 @@ export default function EventModal({ isOpen, onClose, onSave, selectedDate }) {
       setStartTime('09:00');
       setEndTime('10:00');
       setEventType('timed');
+      setReminderMinutes(15);
     }
   }, [isOpen, selectedDate]);
 
@@ -33,13 +45,29 @@ export default function EventModal({ isOpen, onClose, onSave, selectedDate }) {
     if (!title.trim()) return;
 
     const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    
+    // 1. 先精準算出這個活動的「開始時間物件 (Date)」
+    const startDateObj = eventType === 'allday' 
+      ? new Date(`${dateStr}T00:00:00`) 
+      : new Date(`${dateStr}T${startTime}:00`);
+
+    // 2. 拿出神奇的計算機：開始時間 - 提醒分鐘數 = 確切的提醒時間！
+    const remindTimeObj = subMinutes(startDateObj, reminderMinutes);
+
+    // 3. 把資料打包，這次欄位名稱完全配合你的 Python 後端！
     const event = {
       title: title.trim(),
       description: description.trim() || null,
       is_all_day: eventType === 'allday',
-      start_time: eventType === 'allday' ? `${dateStr}T00:00:00` : `${dateStr}T${startTime}:00`,
+      start_time: format(startDateObj, "yyyy-MM-dd'T'HH:mm:00"),
       end_time: eventType === 'timed' ? `${dateStr}T${endTime}:00` : null,
+      
+      // 🟢 丟掉 reminder_minutes，換成後端要的 remind_time！
+      remind_time: format(remindTimeObj, "yyyy-MM-dd'T'HH:mm:00"), 
+      is_completed: false, // 順便配合後端加上預設值
+      is_reminded: false
     };
+    
     onSave(event);
   };
 
@@ -128,7 +156,21 @@ export default function EventModal({ isOpen, onClose, onSave, selectedDate }) {
               )}
             </div>
           )}
-
+          <div className="modal__field">
+            <label className="modal__label" htmlFor="event-reminder">Reminder</label>
+            <select
+              id="event-reminder"
+              className="modal__select"
+              value={reminderMinutes}
+              onChange={(e) => setReminderMinutes(Number(e.target.value))}
+            >
+              {REMINDER_OPTIONS.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <button type="submit" className="modal__submit" id="btn-save-event">
             Create Event
           </button>

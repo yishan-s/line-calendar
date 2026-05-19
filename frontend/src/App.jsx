@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { addMonths, subMonths } from 'date-fns';
 import CalendarHeader from './components/CalendarHeader';
 import CalendarGrid from './components/CalendarGrid';
+import EventDetailModal from './components/EventDetailModal';
 import EventModal from './components/EventModal';
 import EventLegend from './components/EventLegend';
 import LoginPrompt from './components/LoginPrompt';
+import WeeklyView from './components/WeeklyView';
 import './App.css';
 
 const API_BASE = 'http://127.0.0.1:8000';
@@ -28,8 +30,11 @@ export default function App() {
   const [events, setEvents] = useState(DEMO_EVENTS);
   const [user, setUser] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [viewMode, setViewMode] = useState('month');
 
   /* Restore user from sessionStorage on mount */
   useEffect(() => {
@@ -60,17 +65,23 @@ export default function App() {
 
   /* Try to fetch events from the API */
   const fetchEvents = useCallback(async () => {
+    if (!user) {
+      setEvents(DEMO_EVENTS);
+      return;
+    }
     try {
-      const res = await fetch(`${API_BASE}/test-events`);
+      const res = await fetch(`${API_BASE}/users/${user.id}/events`);
       if (res.ok) {
         const data = await res.json();
-        if (data.length > 0) setEvents(data);
+        setEvents([...DEMO_EVENTS, ...data]);
       }
     } catch {
       /* API not running, use demo events */
+      setEvents(DEMO_EVENTS);
     }
-  }, []);
+  }, [user]);
 
+  // Fetch events on mount and when currentDate changes
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
@@ -87,6 +98,11 @@ export default function App() {
       setModalOpen(true);
     }
   };
+
+  const handleEventClick = (event) => {
+    setSelectedEvent(event);
+    setDetailModalOpen(true);
+  }
 
   const handleLogin = () => {
     window.location.href = `${API_BASE}/login/line`;
@@ -116,6 +132,31 @@ export default function App() {
     setModalOpen(false);
   };
 
+  const handleDeleteEvent = async (eventId) => {
+    // 1. 如果是測試資料 (字串類型的 ID) 或是沒登入，就直接在前端把資料濾掉
+    if (!user || typeof eventId === 'string') {
+      setEvents(prev => prev.filter(e => e.id !== eventId));
+      setDetailModalOpen(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/events/${eventId}`, {
+        method: 'DELETE', // HTTP 刪除方法
+      });
+      
+      if (res.ok) {
+        // 刪除成功後，重新跟後端要一次最新的活動清單
+        await fetchEvents();
+      }
+    } catch (error) {
+      console.error("刪除失敗：", error);
+    }
+    
+    // 3. 無論如何，刪除完就把詳情視窗關閉
+    setDetailModalOpen(false);
+  };
+
   return (
     <div className="app" id="app-root">
       <CalendarHeader
@@ -126,14 +167,32 @@ export default function App() {
         user={user}
         onLogin={handleLogin}
         onLogout={handleLogout}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
       />
       <main className="app__main">
-        <CalendarGrid
-          currentDate={currentDate}
-          events={events}
-          onDayClick={handleDayClick}
-          user={user}
-        />
+        {viewMode === 'month' ? (
+          <CalendarGrid
+            currentDate={currentDate}
+            events={events}
+            onDayClick={handleDayClick}
+            onEventClick={handleEventClick}
+            user={user}
+            viewMode={viewMode}
+          />
+        ) : (
+          <WeeklyView
+            currentDate={currentDate}
+            events={events}
+            onTimeClick={(time) => {
+              setSelectedDate(time);
+              user ? setModalOpen(true) : setLoginPromptOpen(true);
+            }}
+            onEventClick={handleEventClick}
+            user={user}
+          />
+        )
+        }
       </main>
       <EventLegend />
 
@@ -142,6 +201,15 @@ export default function App() {
         onClose={() => setModalOpen(false)}
         onSave={handleSaveEvent}
         selectedDate={selectedDate}
+      />
+
+      <EventDetailModal
+        isOpen={detailModalOpen}
+        event={selectedEvent}
+        onClose={() => setDetailModalOpen(false)}
+        // 這裡我們暫時先丟空函數，讓你測試「顯示詳情」功能可以動
+        onDelete={handleDeleteEvent}
+        user={user}
       />
 
       {loginPromptOpen && (

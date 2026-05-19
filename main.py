@@ -173,6 +173,17 @@ class EventUpdate(BaseModel):
 def get_all_events(db: Session = Depends(get_db)):
     return db.query(models.Event).all()
 
+@app.get("/users/{user_id}/events")
+def get_user_events(user_id: int, db: Session = Depends(get_db)):
+    
+    # 確認使用者存不存在
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User Not Found")
+    user_events = db.query(models.Event).filter(models.Event.user_id == user_id).all()
+    
+    return user_events
+
 # create an event
 @app.post("/events")
 def create_event(event: EventCreate, db: Session = Depends(get_db)):
