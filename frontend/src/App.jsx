@@ -17,13 +17,12 @@ const DEMO_EVENTS = [
   { id: 2, title: 'Team Standup', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 5, 10, 0).toISOString(), end_time: new Date(new Date().getFullYear(), new Date().getMonth(), 5, 10, 30).toISOString(), is_all_day: false },
   { id: 3, title: 'Dentist Appointment', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 8, 14, 0).toISOString(), end_time: new Date(new Date().getFullYear(), new Date().getMonth(), 8, 15, 0).toISOString(), is_all_day: false },
   { id: 4, title: 'Hackathon', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 12, 9, 0).toISOString(), end_time: null, is_all_day: false },
-  { id: 5, title: '🎂 Birthday Party', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 15).toISOString(), end_time: null, is_all_day: true },
   { id: 6, title: 'Project Review', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 15, 13, 0).toISOString(), end_time: new Date(new Date().getFullYear(), new Date().getMonth(), 15, 14, 30).toISOString(), is_all_day: false },
   { id: 7, title: 'Gym Session', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 18, 18, 0).toISOString(), end_time: null, is_all_day: false },
   { id: 8, title: 'Sprint Planning', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 20, 10, 0).toISOString(), end_time: new Date(new Date().getFullYear(), new Date().getMonth(), 20, 11, 0).toISOString(), is_all_day: false },
   { id: 9, title: '📢 Manager Announcement', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 22).toISOString(), end_time: null, is_all_day: true },
   { id: 10, title: 'Coffee Chat', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 25, 15, 0).toISOString(), end_time: null, is_all_day: false },
-];
+].map(event => ({ ...event, isDemo: true }));
 
 export default function App() {
   const [currentDate, setCurrentDate] = useState(new Date());

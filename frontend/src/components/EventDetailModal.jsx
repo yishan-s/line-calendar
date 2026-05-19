@@ -111,6 +111,7 @@ export default function EventDetailModal({ event, isOpen, onClose, onUpdate, onD
                     type="button"
                     className={`detail-modal__type-btn ${eventType === t.id ? 'detail-modal__type-btn--active' : ''}`}
                     onClick={() => setEventType(t.id)}
+                    disabled={event.isDemo}
                   >
                     {t.icon} <span>{t.label}</span>
                   </button>
@@ -121,6 +122,7 @@ export default function EventDetailModal({ event, isOpen, onClose, onUpdate, onD
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Event title"
+                readOnly={event.isDemo}
               />
               <textarea
                 className="detail-modal__input detail-modal__textarea"
@@ -133,12 +135,12 @@ export default function EventDetailModal({ event, isOpen, onClose, onUpdate, onD
                 <div className="detail-modal__time-row">
                   <div className="detail-modal__field">
                     <label className="detail-modal__label">Start</label>
-                    <input type="time" className="detail-modal__input" value={startTime} onChange={e => setStartTime(e.target.value)} />
+                    <input type="time" className="detail-modal__input" value={startTime} onChange={e => setStartTime(e.target.value)} readOnly={event.isDemo}/>
                   </div>
                   {eventType === 'timed' && (
                     <div className="detail-modal__field">
                       <label className="detail-modal__label">End</label>
-                      <input type="time" className="detail-modal__input" value={endTime} onChange={e => setEndTime(e.target.value)} />
+                      <input type="time" className="detail-modal__input" value={endTime} onChange={e => setEndTime(e.target.value)} disabled={event.isDemo}/>
                     </div>
                   )}
                   {eventType === 'open' && (
@@ -161,13 +163,15 @@ export default function EventDetailModal({ event, isOpen, onClose, onUpdate, onD
                 <button className="detail-modal__btn detail-modal__btn--edit" onClick={() => setEditing(true)} id="btn-edit-event">
                   <Pencil size={14} /> Edit
                 </button>
-                <button
-                  className={`detail-modal__btn detail-modal__btn--delete ${confirmDelete ? 'detail-modal__btn--confirm' : ''}`}
-                  onClick={handleDelete}
-                  id="btn-delete-event"
-                >
-                  <Trash2 size={14} /> {confirmDelete ? 'Confirm Delete?' : 'Delete'}
-                </button>
+                {!event.isDemo && (
+                  <button
+                    className={`detail-modal__btn detail-modal__btn--delete ${confirmDelete ? 'detail-modal__btn--confirm' : ''}`}
+                    onClick={handleDelete}
+                    id="btn-delete-event"
+                  >
+                    <Trash2 size={14} /> {confirmDelete ? 'Confirm Delete?' : 'Delete'}
+                  </button>
+                )}
               </>
             ) : (
               <>
