@@ -1,9 +1,10 @@
 from sqlalchemy.orm import Session
-import models
 import os
+from urllib.parse import urlencode
 import httpx
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 import models
@@ -15,6 +16,14 @@ from typing import Optional
 load_dotenv()
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 def get_db():
     db = SessionLocal() # 1. 申請一把臨時鑰匙打開連線
@@ -102,13 +111,17 @@ async def line_callback(code: str, state: str, db: Session = Depends(get_db)):
             )
             db.add(new_user)
             db.commit()
-    # received data, then print it out
-    return {
-        "message": "Login Success!",
-        "user_name": profile_json.get("displayName"),
-        "user_id": profile_json.get("userId"),
-        "picture_url": profile_json.get("pictureUrl")
-    }
+            db.refresh(new_user)
+            db_user = new_user
+
+        # Redirect back to frontend with user info
+        params = urlencode({
+            "user_id": db_user.id,
+            "line_user_id": db_user.line_user_id,
+            "display_name": profile_json.get("displayName", ""),
+            "picture_url": profile_json.get("pictureUrl", ""),
+        })
+        return RedirectResponse(url=f"http://localhost:5173/?{params}")
 
 @app.post("/send-test")
 async def send_test_message(payload: TestMessage):
@@ -148,6 +161,14 @@ def get_all_users(db: Session = Depends(get_db)):
     all_users = db.query(models.User).all()
     return all_users
 
+class EventUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    is_all_day: Optional[bool] = None
+    remind_time: Optional[datetime] = None
+
 @app.get("/test-events")
 def get_all_events(db: Session = Depends(get_db)):
     return db.query(models.Event).all()
@@ -176,6 +197,40 @@ def create_event(event: EventCreate, db: Session = Depends(get_db)):
     db.refresh(new_event)
     
     return {"message": "Event Created", "event": new_event}
+
+# get a single event
+@app.get("/events/{event_id}")
+def get_event(event_id: int, db: Session = Depends(get_db)):
+    event = db.query(models.Event).filter(models.Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event Not Found")
+    return event
+
+# update an event
+@app.put("/events/{event_id}")
+def update_event(event_id: int, event_data: EventUpdate, db: Session = Depends(get_db)):
+    event = db.query(models.Event).filter(models.Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event Not Found")
+    
+    update_fields = event_data.dict(exclude_unset=True)
+    for field, value in update_fields.items():
+        setattr(event, field, value)
+    
+    db.commit()
+    db.refresh(event)
+    return {"message": "Event Updated", "event": event}
+
+# delete an event
+@app.delete("/events/{event_id}")
+def delete_event(event_id: int, db: Session = Depends(get_db)):
+    event = db.query(models.Event).filter(models.Event.id == event_id).first()
+    if not event:
+        raise HTTPException(status_code=404, detail="Event Not Found")
+    
+    db.delete(event)
+    db.commit()
+    return {"message": "Event Deleted"}
 
 def check_and_send_reminders():
     # 1. 因為這不是 API 路由，我們必須自己手動開資料庫大門
@@ -214,7 +269,7 @@ def check_and_send_reminders():
                     
                     # 如果 LINE 成功接收，我們就改寫資料庫狀態
                     if res.status_code == 200:
-                        event.is_reminded = True
+                        event.is_reminded = True  # type: ignore[assignment]
                         db.commit() # 5. 確認改寫，鎖上金庫
                         print(f"成功發送提醒給 {event.owner.display_name}：{event.title}")
                     else:

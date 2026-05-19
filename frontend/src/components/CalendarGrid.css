@@ -1,0 +1,112 @@
+.cal-grid {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-lg) var(--space-xl);
+  gap: 0;
+  animation: fadeIn 0.4s ease;
+}
+
+.cal-grid__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: var(--space-sm);
+}
+
+.cal-grid__weekday {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--space-sm) 0;
+}
+
+.cal-grid__days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  flex: 1;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.cal-grid__cell {
+  min-height: 110px;
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  padding: var(--space-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  display: flex;
+  flex-direction: column;
+  animation: fadeInUp 0.35s ease both;
+}
+
+.cal-grid__cell:nth-child(7n) { border-right: none; }
+.cal-grid__cell:nth-last-child(-n+7) { border-bottom: none; }
+
+.cal-grid__cell:hover {
+  background: var(--color-surface-hover);
+}
+
+.cal-grid__cell--outside {
+  opacity: 0.35;
+}
+
+.cal-grid__cell--today {
+  background: var(--color-primary-subtle);
+}
+
+.cal-grid__cell--today:hover {
+  background: var(--color-primary-glow);
+}
+
+.cal-grid__date-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-xs);
+}
+
+.cal-grid__date {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+}
+
+.cal-grid__date--today {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(6, 199, 85, 0.35);
+}
+
+.cal-grid__events {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.cal-grid__overflow {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  padding: 1px var(--space-xs);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.cal-grid__overflow:hover {
+  color: var(--color-primary);
+}

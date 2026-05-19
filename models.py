@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from database import Base
 
 class User(Base):
@@ -10,7 +10,7 @@ class User(Base):
     line_user_id = Column(String, unique=True, index=True)
     display_name = Column(String)
     picture_url = Column(String, nullable=True) # 大頭貼可能沒有，允許為空
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # 建立與 Event 的關聯 (這會讓查詢非常方便)
     events = relationship("Event", back_populates="owner")

@@ -1,0 +1,4 @@
+{
+  "python.defaultInterpreterPath": "/opt/homebrew/Caskroom/miniconda/base/envs/line_calendar/bin/python",
+  "pyrefly.interpreterPath": "/opt/homebrew/Caskroom/miniconda/base/envs/line_calendar/bin/python"
+}
