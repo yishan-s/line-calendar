@@ -12,16 +12,19 @@ import './App.css';
 const API_BASE = 'http://127.0.0.1:8000';
 
 /* Sample events for demo when API is unavailable */
+const currentYear = new Date().getFullYear();
+
 const DEMO_EVENTS = [
-  { id: 1, title: '🎌 National Holiday', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString(), end_time: null, is_all_day: true },
-  { id: 2, title: 'Team Standup', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 5, 10, 0).toISOString(), end_time: new Date(new Date().getFullYear(), new Date().getMonth(), 5, 10, 30).toISOString(), is_all_day: false },
-  { id: 3, title: 'Dentist Appointment', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 8, 14, 0).toISOString(), end_time: new Date(new Date().getFullYear(), new Date().getMonth(), 8, 15, 0).toISOString(), is_all_day: false },
-  { id: 4, title: 'Hackathon', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 12, 9, 0).toISOString(), end_time: null, is_all_day: false },
-  { id: 6, title: 'Project Review', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 15, 13, 0).toISOString(), end_time: new Date(new Date().getFullYear(), new Date().getMonth(), 15, 14, 30).toISOString(), is_all_day: false },
-  { id: 7, title: 'Gym Session', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 18, 18, 0).toISOString(), end_time: null, is_all_day: false },
-  { id: 8, title: 'Sprint Planning', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 20, 10, 0).toISOString(), end_time: new Date(new Date().getFullYear(), new Date().getMonth(), 20, 11, 0).toISOString(), is_all_day: false },
-  { id: 9, title: '📢 Manager Announcement', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 22).toISOString(), end_time: null, is_all_day: true },
-  { id: 10, title: 'Coffee Chat', start_time: new Date(new Date().getFullYear(), new Date().getMonth(), 25, 15, 0).toISOString(), end_time: null, is_all_day: false },
+  { id: 1, title: '🎌 New Year\'s Day', start_time: new Date(currentYear, 0, 1).toISOString(), end_time: null, is_all_day: true },
+  { id: 2, title: '🧧 Lunar New Year', start_time: new Date(currentYear, 1, 17).toISOString(), end_time: null, is_all_day: true },
+  { id: 3, title: '🕊️ Peace Memorial Day', start_time: new Date(currentYear, 1, 28).toISOString(), end_time: null, is_all_day: true },
+  { id: 4, title: '🎈 Children\'s Day', start_time: new Date(currentYear, 3, 4).toISOString(), end_time: null, is_all_day: true },
+  { id: 5, title: '🪦 Tomb Sweeping Day', start_time: new Date(currentYear, 3, 5).toISOString(), end_time: null, is_all_day: true },
+  { id: 6, title: '👷 Labor Day', start_time: new Date(currentYear, 4, 1).toISOString(), end_time: null, is_all_day: true },
+  { id: 7, title: '🐉 Dragon Boat Festival', start_time: new Date(currentYear, 5, 19).toISOString(), end_time: null, is_all_day: true },
+  { id: 8, title: '🥮 Mid-Autumn Festival', start_time: new Date(currentYear, 8, 25).toISOString(), end_time: null, is_all_day: true },
+  { id: 9, title: '🇹🇼 National Day', start_time: new Date(currentYear, 9, 10).toISOString(), end_time: null, is_all_day: true },
+  { id: 10, title: '🎄 Christmas Day', start_time: new Date(currentYear, 11, 25).toISOString(), end_time: null, is_all_day: true },
 ].map(event => ({ ...event, isDemo: true }));
 
 export default function App() {
