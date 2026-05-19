@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek,
-  eachDayOfInterval, isSameMonth, isSameDay, isToday, format
+  eachDayOfInterval, isSameMonth, isSameDay, isToday, format,
+  startOfDay, endOfDay, isWithinInterval
 } from 'date-fns';
 import EventChip from './EventChip';
 import './CalendarGrid.css';
@@ -18,9 +19,25 @@ export default function CalendarGrid({ currentDate, events, onDayClick, onEventC
   }, [currentDate]);
 
   const getEventsForDay = (day) => {
+    const dayStart = startOfDay(day);
+    const dayEnd = endOfDay(day);
+
     return events.filter(event => {
-      const eventDate = new Date(event.start_time);
-      return isSameDay(eventDate, day);
+      const eventStart = startOfDay(new Date(event.start_time));
+
+      // If event has no end_time, it only appears on its start day
+      if (!event.end_time) {
+        return isSameDay(eventStart, day);
+      }
+
+      const eventEnd = endOfDay(new Date(event.end_time));
+
+      // Check if this day overlaps with the event's date range
+      return (
+        isWithinInterval(dayStart, { start: eventStart, end: eventEnd }) ||
+        isWithinInterval(dayEnd, { start: eventStart, end: eventEnd }) ||
+        (dayStart <= eventStart && dayEnd >= eventEnd)
+      );
     });
   };
 

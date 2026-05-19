@@ -191,6 +191,78 @@
   min-height: 60px;
 }
 
+/* ==========================================
+   Multi-day Toggle
+   ========================================== */
+.modal__multiday-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.modal__multiday-toggle:hover {
+  background: var(--color-surface-hover);
+  border-color: var(--color-border-hover);
+}
+
+.modal__multiday-toggle--active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.modal__toggle-switch {
+  margin-left: auto;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-active);
+  position: relative;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.modal__toggle-switch--on {
+  background: var(--color-primary);
+}
+
+.modal__toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  background: #fff;
+  transition: transform var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.modal__toggle-switch--on .modal__toggle-knob {
+  transform: translateX(16px);
+}
+
+/* ==========================================
+   Date Row
+   ========================================== */
+.modal__date-row {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.modal__date-row .modal__field { flex: 1; }
+
 .modal__time-row {
   display: flex;
   gap: var(--space-lg);

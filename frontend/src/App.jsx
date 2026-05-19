@@ -7,6 +7,7 @@ import EventModal from './components/EventModal';
 import EventLegend from './components/EventLegend';
 import LoginPrompt from './components/LoginPrompt';
 import WeeklyView from './components/WeeklyView';
+import InboxPanel from './components/InboxPanel';
 import './App.css';
 
 const API_BASE = 'http://127.0.0.1:8000';
@@ -37,6 +38,7 @@ export default function App() {
   const [loginPromptOpen, setLoginPromptOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
   const [viewMode, setViewMode] = useState('month');
+  const [prefillTitle, setPrefillTitle] = useState('');
 
   /* Restore user from sessionStorage on mount */
   useEffect(() => {
@@ -94,11 +96,22 @@ export default function App() {
 
   const handleDayClick = (day) => {
     setSelectedDate(day);
+    setPrefillTitle('');
     if (!user) {
       setLoginPromptOpen(true);
     } else {
       setModalOpen(true);
     }
+  };
+
+  const handleScheduleInboxItem = (item) => {
+    if (!user) {
+      setLoginPromptOpen(true);
+      return;
+    }
+    setSelectedDate(new Date());
+    setPrefillTitle(item.text);
+    setModalOpen(true);
   };
 
   const handleEventClick = (event) => {
@@ -200,9 +213,10 @@ export default function App() {
 
       <EventModal
         isOpen={modalOpen}
-        onClose={() => setModalOpen(false)}
+        onClose={() => { setModalOpen(false); setPrefillTitle(''); }}
         onSave={handleSaveEvent}
         selectedDate={selectedDate}
+        prefillTitle={prefillTitle}
       />
 
       <EventDetailModal
@@ -213,6 +227,8 @@ export default function App() {
         onDelete={handleDeleteEvent}
         user={user}
       />
+
+      <InboxPanel user={user} onSchedule={handleScheduleInboxItem} />
 
       {loginPromptOpen && (
         <LoginPrompt

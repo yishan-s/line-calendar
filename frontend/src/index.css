@@ -79,6 +79,68 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
+/* ===== Light Theme ===== */
+[data-theme="light"] {
+  /* LINE brand green (slightly adjusted for light bg) */
+  --color-primary: #05A647;
+  --color-primary-light: #06C755;
+  --color-primary-dark: #048A3A;
+  --color-primary-glow: rgba(6, 199, 85, 0.12);
+  --color-primary-subtle: rgba(6, 199, 85, 0.06);
+
+  /* Surfaces */
+  --color-bg: #F8FAFC;
+  --color-bg-secondary: #FFFFFF;
+  --color-bg-tertiary: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F1F5F9;
+  --color-surface-active: #E2E8F0;
+  --color-surface-glass: rgba(255, 255, 255, 0.8);
+
+  /* Text */
+  --color-text: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-tertiary: #64748B;
+  --color-text-muted: #94A3B8;
+
+  /* Borders */
+  --color-border: rgba(15, 23, 42, 0.08);
+  --color-border-hover: rgba(15, 23, 42, 0.15);
+  --color-border-active: rgba(6, 199, 85, 0.35);
+
+  /* Event type colors (slightly deeper for light bg readability) */
+  --color-event-allday: #6366F1;
+  --color-event-allday-bg: rgba(99, 102, 241, 0.08);
+  --color-event-allday-border: rgba(99, 102, 241, 0.3);
+
+  --color-event-timed: #0284C7;
+  --color-event-timed-bg: rgba(2, 132, 199, 0.08);
+  --color-event-timed-border: rgba(2, 132, 199, 0.3);
+
+  --color-event-open: #EA580C;
+  --color-event-open-bg: rgba(234, 88, 12, 0.08);
+  --color-event-open-border: rgba(234, 88, 12, 0.3);
+
+  /* Feedback */
+  --color-danger: #DC2626;
+  --color-warning: #D97706;
+  --color-info: #2563EB;
+
+  /* Shadows (softer for light theme) */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(6, 199, 85, 0.12);
+}
+
+/* Remove dark ambient glow in light mode */
+[data-theme="light"] body::before {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 199, 85, 0.04), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99, 102, 241, 0.03), transparent),
+    radial-gradient(ellipse 50% 50% at 20% 60%, rgba(2, 132, 199, 0.02), transparent);
+}
+
 /* ===== Reset & Base ===== */
 *,
 *::before,
@@ -101,6 +163,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Subtle animated background */
