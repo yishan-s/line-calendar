@@ -1,0 +1,137 @@
+.todo-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.todo-form__row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.todo-form__select,
+.todo-form__datetime {
+  flex: 1;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  outline: none;
+}
+
+.todo-form__select:focus,
+.todo-form__datetime:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-glow);
+}
+
+.todo-progress {
+  margin-bottom: var(--space-md);
+}
+
+.todo-progress__meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.todo-progress__bar {
+  height: 3px;
+  background: var(--color-surface-active);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.todo-progress__fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  transition: width 0.35s ease;
+}
+
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.todo-row:hover {
+  background: var(--color-surface-hover);
+}
+
+.todo-row--completed {
+  opacity: 0.6;
+}
+
+.todo-row__checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-text-muted);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: transparent;
+  padding: 0;
+}
+
+.todo-row__checkbox--checked {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.todo-row__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.todo-row__text {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.todo-row--completed .todo-row__text {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.todo-row__time {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 0.68rem;
+  color: var(--color-text-muted);
+}
+
+.todo-row__delete {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition-fast), color var(--transition-fast), background var(--transition-fast);
+}
+
+.todo-row:hover .todo-row__delete {
+  opacity: 1;
+}
+
+.todo-row__delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
+}

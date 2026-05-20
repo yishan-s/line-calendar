@@ -44,7 +44,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
   border-left: 2px solid var(--color-event-allday);
   transition: filter var(--transition-fast);
 }
@@ -170,9 +171,10 @@
 /* Event blocks */
 .weekly__event {
   position: absolute;
-  left: 2px;
-  right: 2px;
-  border-radius: var(--radius-sm);
+  left: 0;
+  right: 0;
+  width: 100%;
+  border-radius: 0;
   padding: 3px 6px;
   cursor: pointer;
   overflow: hidden;

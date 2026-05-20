@@ -61,7 +61,7 @@ export default function CalendarHeader({ currentDate, onPrev, onNext, onToday, u
       <div className="cal-header__left">
         <div className="cal-header__logo">
           <Calendar size={22} className="cal-header__logo-icon" />
-          <span className="cal-header__logo-text">LINE Calendar</span>
+          <span className="cal-header__logo-text">tomo.row</span>
         </div>
       </div>
 

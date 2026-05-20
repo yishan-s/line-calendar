@@ -1,10 +1,20 @@
 /* ==========================================
-   Inbox Trigger (FAB)
+   Composite FAB (Floating Action Button)
    ========================================== */
-.inbox-trigger {
+.fab-container {
   position: fixed;
   bottom: 28px;
   right: 28px;
+  z-index: 500;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 0;
+}
+
+/* ── Main FAB Button ── */
+.fab-main {
+  position: relative;
   width: 52px;
   height: 52px;
   border: none;
@@ -15,26 +25,94 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 500;
+  z-index: 502;
   box-shadow: 0 4px 16px rgba(6, 199, 85, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all var(--transition-fast);
+  transition: transform var(--transition-fast) cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow var(--transition-fast),
+              background var(--transition-fast);
 }
 
-.inbox-trigger:hover {
+.fab-main:hover {
   transform: translateY(-2px) scale(1.05);
   box-shadow: 0 6px 24px rgba(6, 199, 85, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.inbox-trigger:active {
-  transform: translateY(0) scale(0.98);
+.fab-main:active {
+  transform: translateY(0) scale(0.96);
 }
 
-.inbox-trigger--active {
+.fab-main__icon {
+  transition: transform var(--transition-normal) cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.fab-main--expanded .fab-main__icon {
+  transform: rotate(45deg);
+}
+
+.fab-main--expanded {
   background: var(--color-surface-active);
   box-shadow: var(--shadow-md);
 }
 
-.inbox-trigger__badge {
+/* ── FAB Child Buttons (shared) ── */
+.fab-child {
+  position: absolute;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: var(--radius-full);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 501;
+  opacity: 0;
+  transform: scale(0.4) translateY(0);
+  pointer-events: none;
+  transition: transform var(--transition-normal) cubic-bezier(0.34, 1.56, 0.64, 1),
+              opacity var(--transition-fast) ease,
+              box-shadow var(--transition-fast);
+}
+
+.fab-child--visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translateY(0);
+}
+
+.fab-child:hover {
+  transform: scale(1.1) translateY(0) !important;
+}
+
+.fab-child:active {
+  transform: scale(0.95) translateY(0) !important;
+}
+
+/* ── Tasks Child ── */
+.fab-child--tasks {
+  bottom: 70px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  box-shadow: 0 4px 14px rgba(6, 199, 85, 0.35), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.fab-child--tasks:hover {
+  box-shadow: 0 6px 20px rgba(6, 199, 85, 0.5), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Create Event Child ── */
+.fab-child--create {
+  bottom: 130px;
+  background: linear-gradient(135deg, #6366F1, var(--color-event-timed));
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.fab-child--create:hover {
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.45), 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Badge on child ── */
+.fab-child__badge {
   position: absolute;
   top: -4px;
   right: -4px;
@@ -53,10 +131,46 @@
   animation: pulse-dot 2s ease-in-out infinite;
 }
 
+/* ── FAB Tooltip Labels ── */
+.fab-label {
+  position: absolute;
+  right: calc(100% + 12px);
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  opacity: 0;
+  transform: translateX(6px);
+  pointer-events: none;
+  transition: opacity var(--transition-fast),
+              transform var(--transition-fast);
+}
+
+.fab-child:hover .fab-label {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── FAB Backdrop ── */
+.fab-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 499;
+  background: rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.15s ease;
+}
+
 /* ==========================================
-   Inbox Overlay & Panel
+   Tasks Overlay & Panel
    ========================================== */
-.inbox-overlay {
+.tasks-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
@@ -67,8 +181,8 @@
   animation: fadeIn 0.15s ease;
 }
 
-.inbox-panel {
-  width: 380px;
+.tasks-panel {
+  width: 400px;
   max-width: 90vw;
   height: 100%;
   background: var(--color-bg-secondary);
@@ -92,39 +206,30 @@
 }
 
 /* ── Header ── */
-.inbox-panel__header {
+.tasks-panel__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-xl) var(--space-xl) var(--space-sm);
 }
 
-.inbox-panel__header-left {
+.tasks-panel__header-left {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
 }
 
-.inbox-panel__header-icon {
+.tasks-panel__header-icon {
   color: var(--color-primary);
 }
 
-.inbox-panel__title {
+.tasks-panel__title {
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--color-text);
 }
 
-.inbox-panel__count {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  background: var(--color-primary-subtle);
-  color: var(--color-primary);
-}
-
-.inbox-panel__close {
+.tasks-panel__close {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -138,53 +243,126 @@
   transition: all var(--transition-fast);
 }
 
-.inbox-panel__close:hover {
+.tasks-panel__close:hover {
   background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
-.inbox-panel__subtitle {
+.tasks-panel__subtitle {
   font-size: 0.78rem;
   color: var(--color-text-muted);
   padding: 0 var(--space-xl) var(--space-lg);
   line-height: 1.4;
 }
 
-/* ── Quick Add Form ── */
-.inbox-panel__form {
-  display: flex;
-  gap: var(--space-sm);
-  padding: 0 var(--space-xl) var(--space-lg);
+/* ── Scrollable Content ── */
+.tasks-panel__content {
+  flex: 1;
+  overflow-y: auto;
 }
 
-.inbox-panel__input {
+/* ==========================================
+   Task Sections
+   ========================================== */
+.tasks-section {
+  padding: var(--space-lg) var(--space-xl);
+}
+
+.tasks-section + .tasks-section {
+  border-top: 1px solid var(--color-border);
+}
+
+.tasks-section__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.tasks-section__icon {
+  color: var(--color-primary);
+}
+
+.tasks-section__icon--todo {
+  color: var(--color-event-timed);
+}
+
+.tasks-section__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+}
+
+.tasks-section__count {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  margin-left: auto;
+}
+
+.tasks-section__hint {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-md);
+  line-height: 1.4;
+}
+
+/* ── Progress Bar ── */
+.tasks-section__progress {
+  height: 3px;
+  background: var(--color-surface-active);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-md);
+  overflow: hidden;
+}
+
+.tasks-section__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  border-radius: var(--radius-full);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Section Form ── */
+.tasks-section__form {
+  display: flex;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.tasks-section__input {
   flex: 1;
-  padding: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg-tertiary);
   color: var(--color-text);
   font-family: var(--font-sans);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   outline: none;
   transition: border-color var(--transition-fast);
 }
 
-.inbox-panel__input:focus {
+.tasks-section__input:focus {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-glow);
 }
 
-.inbox-panel__input::placeholder {
+.tasks-section__input::placeholder {
   color: var(--color-text-muted);
 }
 
-.inbox-panel__add-btn {
+.tasks-section__add-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border: none;
   border-radius: var(--radius-md);
   background: var(--color-primary);
@@ -194,68 +372,54 @@
   flex-shrink: 0;
 }
 
-.inbox-panel__add-btn:hover:not(:disabled) {
+.tasks-section__add-btn:hover:not(:disabled) {
   background: var(--color-primary-light);
   box-shadow: var(--shadow-glow);
 }
 
-.inbox-panel__add-btn:disabled {
+.tasks-section__add-btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
 
-/* ── Items List ── */
-.inbox-panel__list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 var(--space-lg);
+/* ── Section List ── */
+.tasks-section__list {
+  min-height: 40px;
 }
 
 /* ── Empty State ── */
-.inbox-panel__empty {
+.tasks-section__empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: var(--space-3xl) var(--space-xl);
   gap: var(--space-sm);
-}
-
-.inbox-panel__empty-icon {
+  padding: var(--space-xl);
   color: var(--color-text-muted);
-  opacity: 0.4;
-  margin-bottom: var(--space-sm);
-}
-
-.inbox-panel__empty-text {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-text-tertiary);
-}
-
-.inbox-panel__empty-hint {
   font-size: 0.78rem;
-  color: var(--color-text-muted);
-  text-align: center;
-  line-height: 1.5;
 }
 
-/* ── Inbox Item ── */
-.inbox-item {
+.tasks-section__empty-icon {
+  opacity: 0.25;
+}
+
+/* ==========================================
+   Task Item (Unplanned)
+   ========================================== */
+.task-item {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-md);
+  padding: var(--space-sm);
   border-radius: var(--radius-md);
   transition: background var(--transition-fast);
   animation: fadeInUp 0.3s ease both;
 }
 
-.inbox-item:hover {
+.task-item:hover {
   background: var(--color-surface-hover);
 }
 
-.inbox-item__grip {
+.task-item__grip {
   color: var(--color-text-muted);
   opacity: 0;
   cursor: grab;
@@ -263,11 +427,11 @@
   flex-shrink: 0;
 }
 
-.inbox-item:hover .inbox-item__grip {
+.task-item:hover .task-item__grip {
   opacity: 1;
 }
 
-.inbox-item__content {
+.task-item__content {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -275,20 +439,20 @@
   gap: 2px;
 }
 
-.inbox-item__text {
-  font-size: 0.88rem;
+.task-item__text {
+  font-size: 0.85rem;
   font-weight: 500;
   color: var(--color-text);
   line-height: 1.35;
   word-break: break-word;
 }
 
-.inbox-item__date {
-  font-size: 0.7rem;
+.task-item__date {
+  font-size: 0.68rem;
   color: var(--color-text-muted);
 }
 
-.inbox-item__actions {
+.task-item__actions {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -297,11 +461,11 @@
   flex-shrink: 0;
 }
 
-.inbox-item:hover .inbox-item__actions {
+.task-item:hover .task-item__actions {
   opacity: 1;
 }
 
-.inbox-item__action {
+.task-item__action {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -314,21 +478,173 @@
   transition: all var(--transition-fast);
 }
 
-.inbox-item__action--schedule {
+.task-item__action--schedule {
   color: var(--color-primary);
   gap: 0;
 }
 
-.inbox-item__action--schedule:hover {
+.task-item__action--schedule:hover {
   background: var(--color-primary-subtle);
   color: var(--color-primary-light);
 }
 
-.inbox-item__action--delete {
+.task-item__action--delete {
   color: var(--color-text-muted);
 }
 
-.inbox-item__action--delete:hover {
+.task-item__action--delete:hover {
   background: rgba(239, 68, 68, 0.1);
   color: var(--color-danger);
+}
+
+/* ==========================================
+   To-Do Item
+   ========================================== */
+.todo-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  animation: fadeInUp 0.3s ease both;
+}
+
+.todo-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.todo-item--completed {
+  opacity: 0.5;
+}
+
+/* ── Checkbox ── */
+.todo-item__checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-text-muted);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  color: transparent;
+  padding: 0;
+}
+
+.todo-item__checkbox:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.todo-item__checkbox--checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+  animation: checkBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes checkBounce {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ── To-Do Content ── */
+.todo-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.todo-item__text {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.35;
+  word-break: break-word;
+  transition: all var(--transition-fast);
+}
+
+.todo-item--completed .todo-item__text {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+/* ── To-Do Actions (show on hover) ── */
+.todo-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.todo-item:hover .todo-item__actions {
+  opacity: 1;
+}
+
+/* ==========================================
+   Tab Navigation Redesign
+   ========================================== */
+.tasks-panel__tabs {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.tasks-panel__tab {
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text);
+  opacity: 0.45;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+}
+
+.tasks-panel__tab:hover {
+  opacity: 0.72;
+}
+
+.tasks-panel__tab--active {
+  opacity: 1;
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(6, 199, 85, 0.28);
+}
+
+.tasks-panel__content {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.tasks-tab-panel {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
+  transition: opacity 220ms ease, transform 220ms ease;
+  overflow-y: auto;
+}
+
+.tasks-tab-panel--active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
 }

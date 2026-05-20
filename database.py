@@ -4,7 +4,6 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 # 指定 SQLite 資料庫的檔案名稱為 calendar.db
 SQLALCHEMY_DATABASE_URL = "sqlite:///./calendar.db"
 
-# 建立資料庫引擎 (check_same_thread=False 是 SQLite 搭配 FastAPI 時的必備設定)
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )

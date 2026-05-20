@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { addMonths, subMonths } from 'date-fns';
 import CalendarHeader from './components/CalendarHeader';
 import CalendarGrid from './components/CalendarGrid';
@@ -8,6 +8,7 @@ import EventLegend from './components/EventLegend';
 import LoginPrompt from './components/LoginPrompt';
 import WeeklyView from './components/WeeklyView';
 import InboxPanel from './components/InboxPanel';
+import DayDashboard from './components/DayDashboard';
 import './App.css';
 
 const API_BASE = 'http://127.0.0.1:8000';
@@ -39,6 +40,30 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [viewMode, setViewMode] = useState('month');
   const [prefillTitle, setPrefillTitle] = useState('');
+  const [dashboardDate, setDashboardDate] = useState(null);
+  const [todoCalendarItems, setTodoCalendarItems] = useState([]);
+
+  const todoCalendarEvents = useMemo(
+    () =>
+      todoCalendarItems
+        .filter((item) => item.datetime)
+        .map((item) => {
+          const titlePrefix = item.type === 'deadline' ? 'DDL' : 'TODO';
+          return {
+            id: `todo-calendar-${item.id}`,
+            title: `${titlePrefix}: ${item.title}`,
+            start_time: item.datetime,
+            end_time: null,
+            is_all_day: false,
+            isTodoCalendarItem: true,
+            source: 'inbox-todo',
+            todoType: item.type,
+          };
+        }),
+    [todoCalendarItems]
+  );
+
+  const displayEvents = useMemo(() => [...events, ...todoCalendarEvents], [events, todoCalendarEvents]);
 
   /* Restore user from sessionStorage on mount */
   useEffect(() => {
@@ -95,6 +120,21 @@ export default function App() {
   const handleToday = () => setCurrentDate(new Date());
 
   const handleDayClick = (day) => {
+    setDashboardDate(day);
+  };
+
+  const handleCreateEventFromFab = () => {
+    setSelectedDate(new Date());
+    setPrefillTitle('');
+    if (!user) {
+      setLoginPromptOpen(true);
+    } else {
+      setModalOpen(true);
+    }
+  };
+
+  const handleCreateEventFromDashboard = (day) => {
+    setDashboardDate(null);
     setSelectedDate(day);
     setPrefillTitle('');
     if (!user) {
@@ -115,6 +155,7 @@ export default function App() {
   };
 
   const handleEventClick = (event) => {
+    if (event.source === 'inbox-todo') return;
     setSelectedEvent(event);
     setDetailModalOpen(true);
   }
@@ -189,7 +230,7 @@ export default function App() {
         {viewMode === 'month' ? (
           <CalendarGrid
             currentDate={currentDate}
-            events={events}
+            events={displayEvents}
             onDayClick={handleDayClick}
             onEventClick={handleEventClick}
             user={user}
@@ -198,7 +239,7 @@ export default function App() {
         ) : (
           <WeeklyView
             currentDate={currentDate}
-            events={events}
+            events={displayEvents}
             onTimeClick={(time) => {
               setSelectedDate(time);
               user ? setModalOpen(true) : setLoginPromptOpen(true);
@@ -228,7 +269,23 @@ export default function App() {
         user={user}
       />
 
-      <InboxPanel user={user} onSchedule={handleScheduleInboxItem} />
+      <InboxPanel
+        user={user}
+        onSchedule={handleScheduleInboxItem}
+        onCreateEvent={handleCreateEventFromFab}
+        onTodoCalendarDataChange={setTodoCalendarItems}
+      />
+
+      {dashboardDate && (
+        <DayDashboard
+          date={dashboardDate}
+          events={displayEvents}
+          user={user}
+          onClose={() => setDashboardDate(null)}
+          onEventClick={handleEventClick}
+          onCreateEvent={handleCreateEventFromDashboard}
+        />
+      )}
 
       {loginPromptOpen && (
         <LoginPrompt

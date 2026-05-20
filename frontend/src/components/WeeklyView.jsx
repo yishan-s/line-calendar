@@ -18,7 +18,10 @@ export default function WeeklyView({ currentDate, events, onTimeClick, onEventCl
   }, [currentDate]);
 
   const getEventsForDay = (day) =>
-    events.filter(e => isSameDay(new Date(e.start_time), day));
+    events
+      .filter(e => isSameDay(new Date(e.start_time), day))
+      // 加入排序：依據開始時間由早到晚 (垂直順序)
+      .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
   const getAllDayEvents = (day) =>
     getEventsForDay(day).filter(e => e.is_all_day);
